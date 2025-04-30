@@ -122,9 +122,16 @@ const Products = ({ addToCart, wishlist, toggleWishlist }) => {
     : [];
 
   const handleRecommendClick = (productId) => {
+    console.log("userId:", userId, typeof userId);
+    console.log("productId:", productId, typeof productId);
+    console.log("Sample recommendations:", recommendations.slice(0, 3));
+
     const match = recommendations.find(
-      r => r.UserID === userId && r.ProductID === productId
+      r => String(r.UserID).trim() === String(userId).trim() &&
+           String(r.ProductID).trim() === String(productId).trim()
     );
+
+    console.log("Match found:", match);
 
     if (match) {
       const recIDs = [
@@ -135,7 +142,9 @@ const Products = ({ addToCart, wishlist, toggleWishlist }) => {
         match.Recommendation5
       ].filter(Boolean);
 
+      console.log("recIDs:", recIDs);
       const recProducts = allProducts.filter(p => recIDs.includes(p.ProductID));
+      console.log("recProducts:", recProducts);
       setRecommendedProducts(recProducts);
     } else {
       setRecommendedProducts([]);
