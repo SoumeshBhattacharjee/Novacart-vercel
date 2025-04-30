@@ -7,7 +7,7 @@ const offers = [
     name: 'Sony 1000X Series Headphones',
     image: '/images/offers/1000X_series_OOFM_banner_mobile_1454x884.jpg',
     price: 14990,
-    offer: 'Flat ₹2000 OFF'
+    offer: 'Flat $2000 OFF'
   },
   {
     id: 2,

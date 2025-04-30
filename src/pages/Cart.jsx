@@ -31,7 +31,7 @@ const Cart = ({ cart, setCart }) => {
                 <p>Name: {product.category}</p>
                 <p>Brand: {product.brand}</p>
                 <p>ModelID: {product.name}</p>
-                <p>Price: ₹{product.price}</p>
+                <p>Price: $ {product.price}</p>
                 <button className="remove-btn" onClick={() => removeFromCart(index)}>
                   Remove
                 </button>
@@ -39,7 +39,7 @@ const Cart = ({ cart, setCart }) => {
             </div>
           ))}
           <div className="cart-summary">
-            <h3>Total: ₹{total}</h3>
+            <h3>Total: $ {total}</h3>
             <button className="pay-now-btn" onClick={handlePayNow}>Pay Now</button>
           </div>
         </div>
