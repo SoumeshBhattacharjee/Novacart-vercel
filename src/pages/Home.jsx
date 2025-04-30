@@ -136,6 +136,8 @@ const Home = () => {
     }
   }, [location]);
 
+//
+
   const handleDotClick = (index) => {
     setCurrentSlide(index);
   };

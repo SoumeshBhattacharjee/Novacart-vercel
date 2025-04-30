@@ -4,6 +4,7 @@ import Papa from "papaparse";
 import ProductCard from "../components/ProductCard";
 import RecommendedModal from "../components/RecommendedModal";
 import categoryImages from "../data/CategoryImages"; // Adjust if path is different
+import sampleProducts from "../sampleProducts";
 
 const Products = ({ addToCart, wishlist, toggleWishlist }) => {
   const location = useLocation();
@@ -18,48 +19,99 @@ const Products = ({ addToCart, wishlist, toggleWishlist }) => {
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [userId, setUserId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Get UserID from localStorage
-    const storedUserId = localStorage.getItem("loggedInUserID");
-    if (storedUserId) {
-      setUserId(storedUserId);
-    }
+    let isMounted = true;
 
-    // Load product data
-    Papa.parse("/curated_product_sample.csv", {
-      download: true,
-      header: true,
-      complete: (result) => {
-        const data = result.data.filter(item => item.ProductID);
-        setAllProducts(data);
+    const loadData = async () => {
+      try {
+        // Get UserID from localStorage
+        const storedUserId = localStorage.getItem("loggedInUserID");
+        if (storedUserId) {
+          setUserId(storedUserId);
+        }
 
-        const categories = Array.from(
-          new Map(data.map(item => [item.CategoryID, item.CategoryName])).entries()
-        ).map(([id, name]) => ({ id, name }));
+        // Load product data
+        const productsPromise = new Promise((resolve, reject) => {
+          Papa.parse("/curated_product_sample.csv", {
+            download: true,
+            header: true,
+            complete: (result) => {
+              if (isMounted) {
+                const data = result.data.filter(item => item.ProductID);
+                setAllProducts(data);
+                const categories = Array.from(
+                  new Map(data.map(item => [item.CategoryID, item.CategoryName])).entries()
+                ).map(([id, name]) => ({ id, name }));
+                setUniqueCategories(categories);
 
-        setUniqueCategories(categories);
+                if (categoryFromHome) {
+                  const matched = categories.find(cat => cat.name === categoryFromHome);
+                  if (matched) {
+                    setSelectedCategory(matched.id);
+                    setSelectedCategoryName(matched.name);
+                  }
+                }
+                resolve();
+              }
+            },
+            error: (error) => {
+              if (isMounted) {
+                setError("Failed to load products data");
+                reject(error);
+              }
+            }
+          });
+        });
 
-        if (categoryFromHome) {
-          const matched = categories.find(cat => cat.name === categoryFromHome);
-          if (matched) {
-            setSelectedCategory(matched.id);
-            setSelectedCategoryName(matched.name);
-          }
+        // Load recommendation data
+        const recommendationsPromise = new Promise((resolve, reject) => {
+          Papa.parse("/Recommendations.csv", {
+            download: true,
+            header: true,
+            complete: (result) => {
+              if (isMounted) {
+                setRecommendations(result.data);
+                resolve();
+              }
+            },
+            error: (error) => {
+              if (isMounted) {
+                setError("Failed to load recommendations data");
+                reject(error);
+              }
+            }
+          });
+        });
+
+        await Promise.all([productsPromise, recommendationsPromise]);
+        if (isMounted) {
+          setLoading(false);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.message);
+          setLoading(false);
         }
       }
-    });
+    };
 
-    // Load recommendation data
-    Papa.parse("/Recommendations.csv", {
-      download: true,
-      header: true,
-      complete: (result) => {
-        console.log("Parsed Recommendations:", result.data); // Debugging
-        setRecommendations(result.data);
-      },
-    });
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [categoryFromHome]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   const filteredCategories = uniqueCategories.filter(cat =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase())
